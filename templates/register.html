@@ -1,0 +1,67 @@
+{%extends "base.html"%}
+{%block content%}
+	<div class="content-section">
+		<form method="POST" action="" class="was-validated">
+		{{form.hidden_tag()}}
+		<fieldset class="form-group" style="width: 33%">
+			<legend class="border-bottom mb-4">Connect in one easy step!</legend>
+			<div class="form-group">
+				{{form.username.label(class="form-control-label")}}
+				{% if form.username.errors %}
+				 {{form.username(class="form-control")}}
+					<div class="invalid-feedback">
+						{% for error in form.username.errors %}
+							{{error}}
+						{%endfor%}
+					</div>
+				{%else%}
+					{{form.username(class="form-control")}}
+				{%endif%}
+			</div>
+			<div class="form-group">
+                                {{form.email.label(class="form-control-label")}}
+				{% if form.email.errors %}
+                                {{form.email(class="form-control")}}        
+					<div class="invalid-feedback">
+                                                {% for error in form.email.errors %}
+                                                        {{error}}
+                                                {%endfor%}
+                                        </div>
+                                {%else%}
+                                        {{form.email(class="form-control")}}
+                                {%endif%}
+                        </div>
+			<div class="form-group">
+                                {{form.password.label(class="form-control-label")}}
+                                {% if form.password.errors %}
+				{{form.password(class="form-control")}}
+                                        <div class="invalid-feedback">
+                                                {% for error in form.password.errors %}
+                                                        {{error}}
+                                                {%endfor%}
+                                        </div>
+                                {%else%}
+                                        {{form.password(class="form-control")}}
+                                {%endif%}
+
+                        </div>
+			<div class="form-group">
+                                {{form.confirmPassword.label(class="form-control-label")}}
+		                {% if form.confirmPassword.errors %}
+				{{form.confirmPassword(class="form-control")}}
+                                        <div class="invalid-feedback">
+                                                {% for error in form.confirmPassword.errors %}
+                                                        {{error}}
+                                                {%endfor%}
+                                        </div>
+                                {%else%}
+                                        {{form.confirmPassword(class="form-control")}}
+                                {%endif%}                
+                      	</div>
+		</fieldset>
+		<div class="form-group">
+			{{form.submit(class="btn")}}
+		</div>
+		<small>Already registered? Get back to it and <a href="{{url_for('login')}}">log in</a> now!</small>
+
+{%endblock content%}
