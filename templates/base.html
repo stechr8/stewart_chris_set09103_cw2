@@ -1,6 +1,6 @@
 <!doctype html>
 <head>
-	<title>MyApp</title>
+	<title>Konnect</title>
 	<link href="{{ url_for('static', filename='css/bootstrap.min.css')}}" rel="stylesheet" />
 	<style>
 		body{
@@ -18,14 +18,21 @@
 					<span class="icon-bar"></span>
 					<span class="icon-bar"></span>
 				</button>
-				<a class="navbar-brand" href="/">MyApp</a>
+				<a class="navbar-brand" href="/">Konnect</a>
 			</div>
 			<div id="navbar" class="collapse navbar-collapse">
 			<ul class="nav navbar-nav">
 			
 				<li ><a href="/">Home</a></li>
 				<li ><a href="/explore">Page 1</a></li>
-				<li ><a href="/login">Login</a></li>
+			</ul>
+			
+			<ul class="nav navbar-nav navbar-right">
+				{% if session['loggedIn'] == False %}
+					<li ><a href="/login">Login</a></li>
+				{% else %}
+					<li ><a href="/logout">Logout</a></li>
+				{% endif %}
 			</ul>
 			</div>
 		</div>
@@ -36,7 +43,7 @@
 		{%if messages%}
 			{%for category, message in messages%}
 				<div class="alert alert-{{category}}">
-					{{message|safe}}
+					{{message}}
 				</div>
 			{%endfor%}
 		{%endif%}
