@@ -1,6 +1,6 @@
 from flask import Flask, render_template, flash, redirect, url_for, session, request
 from datetime import datetime
-from forms import RegForm, LoginForm
+from forms import RegForm, LoginForm, ProfileForm, NewPostForm
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import sha256_crypt
 
@@ -38,13 +38,17 @@ def validateUser(user):
 def home():
 	return render_template('home.html')
 
+@app.route("/search/<searchTerm>")
+def userSearch(searchTerm):
+	search = searchTerm
+	return "tada"
+
 @app.route("/register", methods=['GET','POST'])
 def register():
 	try:
 		form = RegForm()
 		if form.validate_on_submit():
 			encryptedPassword = sha256_crypt.encrypt(form.password.data)
-			print(encryptedPassword)
 			user = User(username=form.username.data, email=form.email.data, password=encryptedPassword)
 			validateUser(user)
 			db.session.add(user)
@@ -52,6 +56,7 @@ def register():
 			flash(u'Keep connected, stay safe, and enjoy!', 'success')
 			if request.method == 'POST':
                                 session['loggedIn'] = True
+				session['username'] = user.username
 			return redirect(url_for('home'))
 		return render_template('register.html', form=form)
 	except Exception as error:
@@ -64,11 +69,48 @@ def login():
 	if form.validate_on_submit():
 		user = User.query.filter_by(email=form.email.data).first()
 		if user and sha256_crypt.verify(form.password.data, user.password):
-			flash("Nice to see you again", 'success')
+			if request.method == 'POST':
+                                session['loggedIn'] = True
+				session['user_id'] = user.id
+                                session['username'] = user.username
+				session['email'] = user.email
+				flash("Nice to see you again", 'success')
 			return redirect(url_for('home'))
 		else:
 			flash("Invalid details", 'danger')
         return render_template('login.html', form=form)
+
+@app.route("/logout")
+def logout():
+	session['loggedIn'] = False
+	session.pop('user_id', None)
+	session.pop('username', None)
+	session.pop('email', None)
+	flash('You have been successfully logged out', 'success')
+	return redirect(url_for('home'))
+
+@app.route("/wallPost/new", methods=['GET','POST'])
+def createPost():
+	form = NewPostForm()
+	if form.validate_on_submit():
+		newPost = wallPost(body=form.body.data, user_id=session['user_id'])
+		if request.method == 'POST':
+			db.session.add(newPost)
+			db.session.commit()
+		return redirect('/profile')	
+	return render_template('newPost.html', form=form)
+
+@app.route("/profile")
+def profile():	
+	user = User.query.filter_by(username=session['username']).first()
+	profilePic = user.profilePic
+	wallposts = user.wallPosts
+	return render_template('profile.html', username=session['username'], profilePic=profilePic, wallPosts = wallposts)
+
+#@app.route("/search/<searchTerm>")
+#def search(searchTerm):
+#	search = searchTerm
+#	return search
 
 if __name__ == "__main__":
         init(app)

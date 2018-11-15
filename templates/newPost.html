@@ -1,0 +1,25 @@
+{%extends "base.html"%}
+{%block content%}
+<div class="content-section">
+                <form method="POST" action="">
+                {{form.hidden_tag()}}
+                <fieldset class="form-group" style="height:  width: 33%">
+                        <legend class="border-bottom mb-4">Create your new post</legend>
+                        <div class="form-group">
+                                {{form.body.label(class="form-control-label")}}
+                                {% if form.body.errors %}
+                                 {{form.body(class="form-control")}}
+                                        <div class="invalid-feedback">
+                                                {% for error in form.body.errors %}
+                                                        {{error}}
+                                                {%endfor%}
+                                        </div>
+                                {%else%}
+                                        {{form.body(class="form-control")}}
+                                {%endif%}
+                        </div>
+                </fieldset>
+                <div class="form-group">
+                        {{form.submit(class="btn")}}
+                </div>
+{%endblock%}

@@ -28,10 +28,17 @@
 			</ul>
 			
 			<ul class="nav navbar-nav navbar-right">
-				{% if session['loggedIn'] == False %}
-					<li ><a href="/login">Login</a></li>
-				{% else %}
+				<form class="navbar-form navbar-left">
+        				<div class="form-group">
+          					<input type="text" name="query" class="form-control" placeholder="Search for users">
+        				</div>
+        				<button type="submit" class="btn btn-default" action="/<searchTerm>">Search</button>
+      				</form>
+				{% if session['loggedIn'] %}
+					<li ><a href="/profile">Profile</a></li>
 					<li ><a href="/logout">Logout</a></li>
+				{% else %}
+					<li ><a href="/login">Login</a></li>
 				{% endif %}
 			</ul>
 			</div>
