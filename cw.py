@@ -15,12 +15,14 @@ class User(db.Model):
 	email = db.Column(db.String(50), unique=True, nullable=False)
 	profilePic = db.Column(db.String(20), nullable=False, default='default.jpg' )
 	password = db.Column(db.String(50), nullable=False)
+	joinDate = db.Column(db.DateTime, default=datetime.utcnow(), nullable=False)
+	friends = db.Column(db.String(20))
 	wallPosts = db.relationship('wallPost', backref='poster', lazy=True)
 
 class wallPost(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	body = db.Column(db.Text, nullable=False)
-	timeStamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+	timeStamp = db.Column(db.DateTime, default=datetime.utcnow(), nullable=False)
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 def validateUser(user):
@@ -34,9 +36,18 @@ def validateUser(user):
 	except Exception as error:
 		raise Exception(error.message)
 
+def addFriend():
+	return
+def findFriends():
+	return
+
 @app.route("/")
 def home():
 	return render_template('home.html')
+
+@app.route("/profile/<otherUser>")
+def otherProfile(otherUser):
+	return "haha"
 
 @app.route("/search/<searchTerm>")
 def userSearch(searchTerm):
@@ -57,9 +68,12 @@ def register():
 			if request.method == 'POST':
                                 session['loggedIn'] = True
 				session['username'] = user.username
+				session['user_id'] = user.id
+                                session['email'] = user.email
 			return redirect(url_for('home'))
 		return render_template('register.html', form=form)
 	except Exception as error:
+		form=RegForm()
 		flash(error.message, 'danger')
 		return render_template('register.html', form=form)	
 
@@ -103,9 +117,8 @@ def createPost():
 @app.route("/profile")
 def profile():	
 	user = User.query.filter_by(username=session['username']).first()
-	profilePic = user.profilePic
 	wallposts = user.wallPosts
-	return render_template('profile.html', username=session['username'], profilePic=profilePic, wallPosts = wallposts)
+	return render_template('profile.html', user=user, wallPosts=wallposts, ownProfile=True, addFriend=addFriend, findFriends=findFriends)
 
 #@app.route("/search/<searchTerm>")
 #def search(searchTerm):

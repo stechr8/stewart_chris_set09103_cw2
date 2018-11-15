@@ -7,7 +7,8 @@ class RegForm(FlaskForm):
 	password = PasswordField('Password', validators=[DataRequired(), Length(min=8, max=20)])
 	email = TextField('Email', validators=[DataRequired(), Email()])
 	confirmPassword = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
-
+	consent = BooleanField('Consent', validators=[DataRequired()])
+	
 	submit = SubmitField('Register')
 
 class LoginForm(FlaskForm):

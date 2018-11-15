@@ -4,9 +4,9 @@
 <div class="col-lg-6 col-sm-6">
     <div class="card hovercard">
 	<div class="useravatar">
-            <img alt="" src="static/img/{{profilePic}}" width:"200px" height="200px">
+            <img alt="" src="static/img/{{user.profilePic}}" width:"200px" height="200px">
         </div>
-        <div class="card-info"> <span class="card-title">{{username}}</span>
+        <div class="card-info"> <span class="card-title">{{user.username}}</span>
         </div>
     </div>
     <div class="btn-pref btn-group btn-group-justified btn-group-lg" role="group" aria-label="...">
@@ -32,27 +32,57 @@
       <div class="tab-content">
         <div class="tab-pane fade in active" id="posts">
 	<div class="form-group">
-		<form>
-			<a href="/wallPost/new" class="btn btn-info" role="button">Create new post</a>
-		</form>
+		{%if ownProfile%}
+			<form>
+				<a href="/wallPost/new" class="btn btn-info" role="button">Create new post</a>
+			</form>
+		{%endif%}
 	</div>
 
           {% for post in wallPosts%}
 		<div class="panel panel-default">
   			<div class="panel-body">{{post.body}}</div>
-  			<div class="panel-footer">{{post.timeStamp}}</div>
+  			<div class="panel-footer">{{post.timeStamp.replace(microsecond=0).isoformat(' ')}}</div>
 		</div>
 	  {% endfor %}
         </div>
         <div class="tab-pane fade in" id="infoList">
-          <h3>This is tab 2</h3>
-        </div>
+			{%if user.name != null%}
+				<div class="panel panel-default">
+					<div class="panel-body">{{user.name}}</div>
+				</div>
+			{% endif %}      
+                        <div class="panel panel-default">
+	                        <div class="panel-body">Joined: {{user.joinDate.date()}}</div>
+                        </div> 
+		<div class="panel panel-default">
+			{%if ownProfile%}
+                       		        <div class="panel-footer"><a href="/profile/update" class="btn btn-info" role="button">Update Profile</a></div>
+                	{%endif%}
+		</div>
+	</div>
         <div class="tab-pane fade in" id="friendList">
-          <h3>This is tab 3</h3>
+	{%if ownProfile%}
+		<div class="panel-footer"><a href={{findFriends()}} class="btn btn-info" role="button">Find friends</a></div>
+	{%else%}
+                <div class="panel-footer"><a href={{addFriend()}} class="btn btn-info" role="button">Add friend</a></div>
+	{%endif%}
+          {%if friendsList != null%}
+		 {% for friend in friendsList%}
+                <div class="panel panel-default">
+                        <div class="panel-body">{{friend}}</div>
+                </div>
+          	{% endfor %}
+	  {%else%}
+		{%if ownProfile%}
+			You currently have no friends. Search for a user and add them!
+		{%else%}
+			This user currently has no friends. Be their first one!
+		{%endif%}
+	{%endif%}
         </div>
       </div>
-    </div>
-    
+    </div> 
     </div>
 
 {%endblock%}
