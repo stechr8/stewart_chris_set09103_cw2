@@ -1,0 +1,25 @@
+{%extends "base.html"%}
+{%block content%}
+<div class="list-group">
+	{% if matchedUser and matchedUser.username != currentUsername %}
+		<button type="button" class="list-group-item list-group-item-action"><a href="/profile/{{matchedUser.username}}">{{matchedUser.username}}</a></button>
+	{% else %}
+		No exact match for "{{search}}".
+	{% endif %}
+	{% if similarMatches %}
+		<hr>
+		{% if similarMatchesCount == 1%}
+			No similar results
+		{% else%}
+                Similar results:
+			{% for user in similarMatches%}
+				{% if user.username != currentUsername %}
+					{% if user.username != matchedUser.username %}
+						<button type="button" class="list-group-item list-group-item-action"><a href="/profile/{{user.username}}">{{user.username}}</a></button>
+					{% endif %}
+				{% endif %}
+			{% endfor %}
+		{% endif %}
+	{% endif %}
+</div>	
+{%endblock%}

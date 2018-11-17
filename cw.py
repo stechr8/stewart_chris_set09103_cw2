@@ -1,6 +1,6 @@
-from flask import Flask, render_template, flash, redirect, url_for, session, request
+from flask import Flask, render_template, flash, redirect, url_for, session, request, abort
 from datetime import datetime
-from forms import RegForm, LoginForm, ProfileForm, NewPostForm
+from forms import RegForm, LoginForm, UpdateProfileForm, NewPostForm, SearchForm
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import sha256_crypt
 
@@ -16,14 +16,24 @@ class User(db.Model):
 	profilePic = db.Column(db.String(20), nullable=False, default='default.jpg' )
 	password = db.Column(db.String(50), nullable=False)
 	joinDate = db.Column(db.DateTime, default=datetime.utcnow(), nullable=False)
-	friends = db.Column(db.String(20))
-	wallPosts = db.relationship('wallPost', backref='poster', lazy=True)
+	wallPosts = db.relationship('WallPost', backref='poster', lazy=True)
+	friends = db.relationship('Friend', backref='friend', lazy=True)
 
-class wallPost(db.Model):
+class WallPost(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	body = db.Column(db.Text, nullable=False)
 	timeStamp = db.Column(db.DateTime, default=datetime.utcnow(), nullable=False)
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+class Friend(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	username = db.Column(db.String(20), unique=True, nullable=False)
+	timeAdded = db.Column(db.DateTime, default=datetime.utcnow(), nullable=False)
+	user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+class Chat(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	
 
 def validateUser(user):
 	try:
@@ -36,23 +46,76 @@ def validateUser(user):
 	except Exception as error:
 		raise Exception(error.message)
 
-def addFriend():
-	return
-def findFriends():
-	return
-
 @app.route("/")
 def home():
 	return render_template('home.html')
 
-@app.route("/profile/<otherUser>")
-def otherProfile(otherUser):
-	return "haha"
+@app.route('/add/user/<string:otherUsername>')
+def addUser(otherUsername):
+	if session['loggedIn'] == True:
+		if session['username'] != otherUsername:
+			otherUser = User.query.filter_by(username=otherUsername).first()
+                        user = User.query.filter_by(username=session['username']).first()
+			if otherUser != None:
+				friend = Friend(username=otherUsername, user_id=user.id)
+				db.session.add(friend)
+				db.session.commit()
+				flash("User added as friend", "success")
+				return redirect('/profile')
+			else:
+				flash("User does not exist", "danger")
+				return redirect("/profile")
+		else:
+			flash("You cannot add yourself as a friend", "danger")
+			return redirect('/profile')
+	else:
+		flash("Please sign in first", "warning")
+	return redirect('/login')		
 
-@app.route("/search/<searchTerm>")
-def userSearch(searchTerm):
-	search = searchTerm
-	return "tada"
+@app.route("/profile/<string:otherUser>")
+def otherProfile(otherUser):
+	 if session.get('loggedIn') == True:
+		if session['username'] != otherUser:
+	                user = User.query.filter_by(username=otherUser).first()
+        	        wallposts = user.wallPosts
+         	        wallposts.reverse()
+                	return render_template('profile.html', user=user, wallPosts=wallposts, ownProfile=False)
+		else:
+			return redirect('/profile')
+         else:
+                flash("Please sign in first", "warning")
+         return redirect("/login")
+
+@app.route("/search/user", methods=['GET','POST'])
+def userSearch():
+	if session.get('loggedIn') == True:
+		form = SearchForm()
+		if request.method == 'POST':
+			if form.validate_on_submit():
+				search = form.username.data
+				url = "/search/" + search + "/results"
+				return redirect(url)
+		return render_template('search.html', form=form)
+	else:
+                flash("Please sign in first", "warning")
+	return redirect("/login")
+
+
+@app.route("/search/<string:search>/results")
+def searchResults(search):
+	if session.get('loggedIn') == True:
+		if search != "":
+			matchedUser = User.query.filter_by(username=search).first()
+	        	similarMatches = User.query.filter(User.username.ilike('%{}%'.format(search)))
+			similarMatchesCount = similarMatches.count()
+			return render_template('results.html', matchedUser=matchedUser, similarMatches=similarMatches, currentUsername=session['username'], search=search, similarMatchesCount=similarMatchesCount)
+		else:
+			abort(404)
+	else:
+                flash("Please sign in first", "warning")
+        return redirect("/login")
+
+	
 
 @app.route("/register", methods=['GET','POST'])
 def register():
@@ -70,7 +133,7 @@ def register():
 				session['username'] = user.username
 				session['user_id'] = user.id
                                 session['email'] = user.email
-			return redirect(url_for('home'))
+			return redirect('/')
 		return render_template('register.html', form=form)
 	except Exception as error:
 		form=RegForm()
@@ -101,29 +164,71 @@ def logout():
 	session.pop('username', None)
 	session.pop('email', None)
 	flash('You have been successfully logged out', 'success')
-	return redirect(url_for('home'))
+	return redirect('/')
 
 @app.route("/wallPost/new", methods=['GET','POST'])
 def createPost():
-	form = NewPostForm()
-	if form.validate_on_submit():
-		newPost = wallPost(body=form.body.data, user_id=session['user_id'])
-		if request.method == 'POST':
-			db.session.add(newPost)
-			db.session.commit()
-		return redirect('/profile')	
-	return render_template('newPost.html', form=form)
+	if session.get('loggedIn') == True:
+		form = NewPostForm()
+		if form.validate_on_submit():
+			newPost = WallPost(body=form.body.data, user_id=session['user_id'])
+			if request.method == 'POST':
+				db.session.add(newPost)
+				db.session.commit()
+			return redirect('/profile')	
+		return render_template('newPost.html', form=form)
+        else:
+                flash("Please sign in first", 'danger')
+        return render_template('login.html', form=form)
 
 @app.route("/profile")
 def profile():	
-	user = User.query.filter_by(username=session['username']).first()
-	wallposts = user.wallPosts
-	return render_template('profile.html', user=user, wallPosts=wallposts, ownProfile=True, addFriend=addFriend, findFriends=findFriends)
+	if session.get('loggedIn') == True:
+		user = User.query.filter_by(username=session['username']).first()
+		wallposts = user.wallPosts
+		wallposts.reverse()
+		friends = user.friends
+		return render_template('profile.html', user=user, wallPosts=wallposts, ownProfile=True, friendsList=friends)
+	else:
+		flash("Please sign in first", "warning")
+                return redirect("/login")
 
-#@app.route("/search/<searchTerm>")
-#def search(searchTerm):
-#	search = searchTerm
-#	return search
+@app.route("/profile/update/<int:user_id>", methods=['GET', 'POST'])
+def updateProfile(user_id):
+	form=UpdateProfileForm()
+        if session.get('loggedIn') == True:
+		if user_id == session['user_id']:
+			if request.method == 'POST':
+				user = User
+			return redirect('/profile')
+       		else:
+	       		flash("You do not have permission to edit this profile", "danger")
+                	return redirect("/")
+        else:
+                flash("Please sign in first", "warning")
+                return redirect("/login")
+        return render_template('updateProfile.html', form=form)
+
+@app.route("/wallpost/view/<int:wallPost_id>")
+def viewPost(wallPost_id):
+	wallPost = WallPost.query.get_or_404(wallPost_id)
+	return render_template('wallPost.html', wallPost = wallPost)
+
+@app.route("/wallpost/delete/<int:wallPost_id>")
+def deletePost(wallPost_id):
+	if session.get('loggedIn') == True:
+		wallPost = WallPost.query.get_or_404(wallPost_id)
+		if wallPost.user_id == session['user_id']:
+			db.session.delete(wallPost)
+        		db.session.commit()
+			flash("Post Deleted", "success")
+		else:
+			flash("You do not have permission to delete this post", "danger")
+			return redirect("/")
+	else:
+		flash("Please sign in first", "warning")
+		return redirect("/login")
+	return redirect('/profile')
 
 if __name__ == "__main__":
         init(app)

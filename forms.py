@@ -25,10 +25,13 @@ class UpdateProfileForm(FlaskForm):
 
         submit = SubmitField('Update Profile')
 
-class ProfileForm(FlaskForm):
-	submit = SubmitField('Create new post')
-
 class NewPostForm(FlaskForm):
 	body = TextAreaField('Body', validators=[DataRequired(), Length(max=200)])
 
 	submit = SubmitField('Submit post')
+
+class SearchForm(FlaskForm):
+	username = TextField('Username', validators=[DataRequired(), Length(min=4, max=20)])
+
+	submit = SubmitField('Search')
+

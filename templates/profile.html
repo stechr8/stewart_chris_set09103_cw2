@@ -39,8 +39,14 @@
 		{%endif%}
 	</div>
 
-          {% for post in wallPosts%}
+          {% for post in wallPosts %}
 		<div class="panel panel-default">
+			{% if ownProfile %}
+				<a href="/wallpost/delete/{{post.id}}"><button type="button" class="close" aria-label="Close">
+  				<span aria-hidden="true">&times;</span>
+				</button>
+				</a>
+			{% endif %}
   			<div class="panel-body">{{post.body}}</div>
   			<div class="panel-footer">{{post.timeStamp.replace(microsecond=0).isoformat(' ')}}</div>
 		</div>
@@ -63,14 +69,14 @@
 	</div>
         <div class="tab-pane fade in" id="friendList">
 	{%if ownProfile%}
-		<div class="panel-footer"><a href={{findFriends()}} class="btn btn-info" role="button">Find friends</a></div>
+		<div class="panel-footer"><a href="/search/user" class="btn btn-info" role="button">Find friends</a></div>
 	{%else%}
-                <div class="panel-footer"><a href={{addFriend()}} class="btn btn-info" role="button">Add friend</a></div>
+                <div class="panel-footer"><a href="/add/user/{{user.username}}" class="btn btn-info" role="button">Add friend</a></div>
 	{%endif%}
           {%if friendsList != null%}
 		 {% for friend in friendsList%}
                 <div class="panel panel-default">
-                        <div class="panel-body">{{friend}}</div>
+                        <div class="panel-body"><a href="/profile/{{friend.username}}">{{friend.username}}</a></div>
                 </div>
           	{% endfor %}
 	  {%else%}
