@@ -4,7 +4,7 @@
 <div class="col-lg-6 col-sm-6">
     <div class="card hovercard">
 	<div class="useravatar">
-            <img alt="" src="static/img/{{user.profilePic}}" width:"200px" height="200px">
+            <img alt="" src="static/profilePics/{{user.profilePic}}" width:"200px" height="200px">
         </div>
         <div class="card-info"> <span class="card-title">{{user.username}}</span>
         </div>
@@ -71,13 +71,23 @@
 	{%if ownProfile%}
 		<div class="panel-footer"><a href="/search/user" class="btn btn-info" role="button">Find friends</a></div>
 	{%else%}
-                <div class="panel-footer"><a href="/add/user/{{user.username}}" class="btn btn-info" role="button">Add friend</a></div>
+		{% if isFriend %}
+                        <div class="panel-footer"><a href="/delete/user/{{user.username}}" class="btn btn-info" role="button">Delete friend</a></div>
+		{% else%}
+                	<div class="panel-footer"><a href="/add/user/{{user.username}}" class="btn btn-info" role="button">Add friend</a></div>
+		{% endif%}
 	{%endif%}
-          {%if friendsList != null%}
+          {% if friendsList %}
 		 {% for friend in friendsList%}
-                <div class="panel panel-default">
+                	<div class="panel panel-default">
+		 	{% if ownProfile %}
+                       		<a href="/delete/user/{{friend.username}}"><button type="button" class="close" aria-label="Close">
+                       		<span aria-hidden="true">&times;</span>
+                       		</button>
+  	               		</a>
+                 	{% endif %}
                         <div class="panel-body"><a href="/profile/{{friend.username}}">{{friend.username}}</a></div>
-                </div>
+                	</div>
           	{% endfor %}
 	  {%else%}
 		{%if ownProfile%}

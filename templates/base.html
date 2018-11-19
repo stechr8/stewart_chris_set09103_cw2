@@ -26,14 +26,7 @@
 				<li ><a href="/">Home</a></li>
 				<li ><a href="/explore">Page 1</a></li>
 			</ul>
-			
 			<ul class="nav navbar-nav navbar-right">
-				<form class="navbar-form navbar-left">
-        				<div class="form-group">
-          					<input type="text" name="query" class="form-control" placeholder="Search for users">
-        				</div>
-        				<button type="submit" class="btn btn-default" action="/<searchTerm>">Search</button>
-      				</form>
 				{% if session['loggedIn'] %}
 					<li ><a href="/profile">Profile</a></li>
 					<li ><a href="/logout">Logout</a></li>

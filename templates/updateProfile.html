@@ -1,0 +1,79 @@
+{%extends "base.html"%}
+{% block content %}
+	<div class="content-section">
+                <form method="POST" action="" enctype="multipart/form-data">
+                {{form.hidden_tag()}}
+                <fieldset class="form-group" style="width: 33%">
+                        <legend class="border-bottom mb-4">Update profile</legend>
+                        <div class="form-group">
+                                {{form.email.label(class="form-control-label")}}
+                                {% if form.email.errors %}
+                                 {{form.email(class="form-control")}}
+                                        <div class="invalid-feedback">
+                                                {% for error in form.email.errors %}
+                                                        {{error}}
+                                                {%endfor%}
+                                        </div>
+                                {%else%}
+                                        {{form.email(class="form-control", value=user.email)}}
+                                {%endif%}
+                        </div>
+			<div class="form-group">
+                                {{form.name.label(class="form-control-label")}}
+                                {% if form.name.errors %}
+                                 {{form.name(class="form-control")}}
+                                        <div class="invalid-feedback">
+                                                {% for error in form.name.errors %}
+                                                        {{error}}
+                                                {%endfor%}
+                                        </div>
+                                {%else%}
+					{% if user.name %}
+                                        	{{form.name(class="form-control", value=user.name)}}
+					{%else%}
+						{{form.name(class="form-control")}}
+					{% endif %}
+                                {%endif%}
+                        </div>
+                        <div class="form-group">
+                                {{form.password.label(class="form-control-label")}}
+                                {% if form.password.errors %}
+                                {{form.password(class="form-control")}}
+                                        <div class="invalid-feedback">
+                                                {% for error in form.password.errors %}
+                                                        {{error}}
+                                                {%endfor%}
+                                        </div>
+                                {%else%}
+                                         {{form.password(class="form-control")}}
+                                {%endif%}
+                        </div>
+			<div class="form-group">
+                                {{form.confirmPassword.label(class="form-control-label")}}
+                                {% if form.confirmPassword.errors %}
+                                {{form.confirmPassword(class="form-control")}}
+                                        <div class="invalid-feedback">
+                                                {% for error in form.confirmPassword.errors %}
+                                                        {{error}}
+                                                {%endfor%}
+                                        </div>
+                                {%else%}
+                                         {{form.confirmPassword(class="form-control")}}
+                                {%endif%}
+                        </div>
+			<div class="form-group">
+				{{form.profilePic.label(class="form-control-label")}}
+				{{form.profilePic(class="form-control-file")}}
+				{% if form.profilePic.errors %}	
+					 <div class="invalid-feedback">
+                                                {% for error in form.profilePic.errors %}
+                                                        {{error}}
+                                                {%endfor%}
+                                        </div>
+				{% endif %}
+                </fieldset>
+                <div class="form-group">
+                        {{form.submit(class="btn")}}
+                </div>
+
+{% endblock %}

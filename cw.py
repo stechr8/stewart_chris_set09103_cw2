@@ -3,6 +3,7 @@ from datetime import datetime
 from forms import RegForm, LoginForm, UpdateProfileForm, NewPostForm, SearchForm
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import sha256_crypt
+from werkzeug import secure_filename
 
 app = Flask(__name__)
 app.secret_key = '\xeb\x10\rv\xf3\x00\x81\xa7\x83\xcc\x9e\xd8\x87\x16\x16\xc4!\x94\xb2\xaa%\xebDo'
@@ -15,6 +16,7 @@ class User(db.Model):
 	email = db.Column(db.String(50), unique=True, nullable=False)
 	profilePic = db.Column(db.String(20), nullable=False, default='default.jpg' )
 	password = db.Column(db.String(50), nullable=False)
+	name = db.Column(db.String(30))
 	joinDate = db.Column(db.DateTime, default=datetime.utcnow(), nullable=False)
 	wallPosts = db.relationship('WallPost', backref='poster', lazy=True)
 	friends = db.relationship('Friend', backref='friend', lazy=True)
@@ -50,6 +52,28 @@ def validateUser(user):
 def home():
 	return render_template('home.html')
 
+@app.route('/delete/user/<string:otherUsername>')
+def deleteUser(otherUsername):
+        if session['loggedIn'] == True:
+                if session['username'] != otherUsername:
+                        otherUser = User.query.filter_by(username=otherUsername).first()
+                        user = User.query.filter_by(username=session['username']).first()
+                        if otherUser != None:
+                                friend = Friend(username=otherUsername, user_id=user.id)
+                                db.session.delete(friend)
+                                db.session.commit()
+                                flash("User has been removed as friend", "success")
+                                return redirect('/profile')
+                        else:
+                                flash("User does not exist", "danger")
+                                return redirect("/profile")
+                else:
+                        flash("You cannot delete yourself as a friend", "danger")
+                        return redirect('/profile')
+        else:
+                flash("Please sign in first", "warning")
+        return redirect('/login')
+
 @app.route('/add/user/<string:otherUsername>')
 def addUser(otherUsername):
 	if session['loggedIn'] == True:
@@ -79,7 +103,13 @@ def otherProfile(otherUser):
 	                user = User.query.filter_by(username=otherUser).first()
         	        wallposts = user.wallPosts
          	        wallposts.reverse()
-                	return render_template('profile.html', user=user, wallPosts=wallposts, ownProfile=False)
+#			isFriend = user.friends.filter
+#			isFriend = Friend.query.filter_by(username=otherUser and user_id=user.id).first()
+#			if isFriend != None:
+#				isFriend = True
+#			else:
+#				isFriend = False
+                	return render_template('profile.html', user=user, wallPosts=wallposts, ownProfile=False, friendsList=user.friends)
 		else:
 			return redirect('/profile')
          else:
@@ -193,17 +223,29 @@ def profile():
 		flash("Please sign in first", "warning")
                 return redirect("/login")
 
-@app.route("/profile/update/<int:user_id>", methods=['GET', 'POST'])
-def updateProfile(user_id):
+@app.route("/profile/update", methods=['GET', 'POST'])
+def updateProfile():
 	form=UpdateProfileForm()
         if session.get('loggedIn') == True:
-		if user_id == session['user_id']:
+		user = User.query.filter_by(username=session['username']).first()
+		if form.validate_on_submit(): 
 			if request.method == 'POST':
-				user = User
-			return redirect('/profile')
-       		else:
-	       		flash("You do not have permission to edit this profile", "danger")
-                	return redirect("/")
+				user.email = form.email.data
+				user.name = form.name.data
+				session['user.email'] = user.email
+				if form.password.data:
+					encryptedPassword = sha256_crypt.encrypt(form.password.data)
+					user.password = encryptedPassword
+				if form.profilePic.data:
+					filename = secure_filename(form.profilePic.data.filename)
+				        form.profilePic.data.save('static/profilePics/' + filename)
+					user.profilePic = filename
+				db.session.commit()
+				flash("Profile updated", "success")
+				return redirect('/profile')
+			if request.method == 'GET':
+		                return render_template('updateProfile.html', form=form, user=user)
+		return render_template('updateProfile.html', form=form, user=user)
         else:
                 flash("Please sign in first", "warning")
                 return redirect("/login")
