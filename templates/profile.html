@@ -48,7 +48,7 @@
 				</a>
 			{% endif %}
   			<div class="panel-body">{{post.body}}</div>
-  			<div class="panel-footer">{{post.timeStamp.replace(microsecond=0).isoformat(' ')}}  <span class="pull-right">Likes: {{post.likes}} {% if not ownProfile %} <a  href="/post/like/{{user.username}}/{{post.id}}"><button type="button" id="like{{post.id}}" class="btn btn-default btn-sm" >
+  			<div class="panel-footer">{{post.timeStamp.replace(microsecond=0).isoformat(' ')}}  <span class="pull-right">Likes: {{post.likes}} {% if not ownProfile %} <a  href="/post/like/{{user.username}}/{{post.id}}/profile"><button type="button" id="like{{post.id}}" class="btn btn-default btn-sm" >
           		</span><span class="glyphicon glyphicon-thumbs-up"></span> Like </button></a>{% endif %}
 		 </div>
 		</div>

@@ -63,10 +63,11 @@ def validateUser(user):
 
 @app.route("/")
 def home():
-	return render_template('home.html')
+	wallPosts = WallPost.query.all()
+	return render_template('home.html', wallPosts=wallPosts)
 
-@app.route('/post/like/<string:otherUser>/<int:post_id>')
-def likePost(otherUser, post_id):
+@app.route('/post/like/<string:otherUser>/<int:post_id>/<string:returnRoute>')
+def likePost(otherUser, post_id, returnRoute):
 	post = WallPost.query.filter_by(id=post_id).first()
 	if session['loggedIn'] == True:
 		hasLiked = PostLikes.query.filter_by(user_id=session['user_id']).filter_by(post_id=post_id).first()
@@ -80,7 +81,13 @@ def likePost(otherUser, post_id):
 			likedPost = PostLikes(user_id=session['user_id'], post_id=post_id)
 			db.session.add(likedPost)
 		db.session.commit()
-	return redirect('/profile/' + otherUser)
+		if returnRoute == "home":
+			return redirect('/')
+		else:
+			return redirect('/profile/' + otherUser)
+	else:
+		flash("Please sign in first", "danger")
+		return redirect('/login')
 
 @app.route('/delete/user/<string:otherUsername>')
 def deleteUser(otherUsername):
