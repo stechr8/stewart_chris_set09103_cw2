@@ -4,7 +4,7 @@
 <div class="col-lg-6 col-sm-6">
     <div class="card hovercard">
 	<div class="useravatar">
-            <img alt="" src="static/profilePics/{{user.profilePic}}" width:"200px" height="200px">
+            <img alt="" src="{{url_for('static', filename="profilePics/" + user.profilePic)}}" width:"200px" height="200px">
         </div>
         <div class="card-info"> <span class="card-title">{{user.username}}</span>
         </div>
@@ -48,12 +48,14 @@
 				</a>
 			{% endif %}
   			<div class="panel-body">{{post.body}}</div>
-  			<div class="panel-footer">{{post.timeStamp.replace(microsecond=0).isoformat(' ')}}</div>
+  			<div class="panel-footer">{{post.timeStamp.replace(microsecond=0).isoformat(' ')}}, Likes: {{post.likes}} {% if not ownProfile %} <a  href="/post/like/{{post.id}}"><button type="button" id="like{{post.id}}" class="btn btn-default btn-sm" >
+          		<span class="glyphicon glyphicon-thumbs-up"></span> Like </button></a>{% endif %}
+		 </div>
 		</div>
 	  {% endfor %}
         </div>
         <div class="tab-pane fade in" id="infoList">
-			{%if user.name != null%}
+			{%if user.name != None and  user.name != "" %}
 				<div class="panel panel-default">
 					<div class="panel-body">{{user.name}}</div>
 				</div>
@@ -89,11 +91,26 @@
                         <div class="panel-body"><a href="/profile/{{friend.username}}">{{friend.username}}</a></div>
                 	</div>
           	{% endfor %}
+		{%if not ownProfile%}
+			{%if isFriend%}
+                                This user is your friend, however they have not added you back yet!
+			{%endif%}
+                        <hr>
+                        <small>Remember: Friendships may be one-sided, as well!</small>
+                {%endif%}
 	  {%else%}
 		{%if ownProfile%}
-			You currently have no friends. Search for a user and add them!
+			You currently have no friends. Search for a user and add them to have quick access to their profile!
 		{%else%}
-			This user currently has no friends. Be their first one!
+			{%if isFriend%}
+				This user is your friend, however they have not added you back yet!
+			{%else%}
+				This user currently has no friends! 
+			{%endif%}
+		{%endif%}
+		{%if not ownProfile%}
+			<hr>
+			<small>Remember: Friendships may be one-sided, as well!</small>
 		{%endif%}
 	{%endif%}
         </div>

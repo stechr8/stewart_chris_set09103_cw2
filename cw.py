@@ -4,6 +4,7 @@ from forms import RegForm, LoginForm, UpdateProfileForm, NewPostForm, SearchForm
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import sha256_crypt
 from werkzeug import secure_filename
+from sqlalchemy import and_
 
 app = Flask(__name__)
 app.secret_key = '\xeb\x10\rv\xf3\x00\x81\xa7\x83\xcc\x9e\xd8\x87\x16\x16\xc4!\x94\xb2\xaa%\xebDo'
@@ -20,22 +21,33 @@ class User(db.Model):
 	joinDate = db.Column(db.DateTime, default=datetime.utcnow(), nullable=False)
 	wallPosts = db.relationship('WallPost', backref='poster', lazy=True)
 	friends = db.relationship('Friend', backref='friend', lazy=True)
+	postsLiked = db.relationship('PostLikes', backref='liker', lazy=True)
 
 class WallPost(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	body = db.Column(db.Text, nullable=False)
 	timeStamp = db.Column(db.DateTime, default=datetime.utcnow(), nullable=False)
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+	likes = db.Column(db.String(50), default="0", nullable=False)
+	likedBy = db.relationship('PostLikes', backref='post', lazy=True)
+
+class PostLikes(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+	post_id = db.Column(db.Integer, db.ForeignKey(WallPost.id), nullable=False)
 
 class Friend(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
-	username = db.Column(db.String(20), unique=True, nullable=False)
+	username = db.Column(db.String(20), nullable=False)
 	timeAdded = db.Column(db.DateTime, default=datetime.utcnow(), nullable=False)
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-class Chat(db.Model):
+class Message(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
-	
+	sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+	recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+	body = db.Column(db.String(140))
+	timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
 def validateUser(user):
 	try:
@@ -52,21 +64,33 @@ def validateUser(user):
 def home():
 	return render_template('home.html')
 
+@app.route('/post/like/<int:post_id>')
+def likePost(post_id):
+	post = WallPost.query.filter_by(id=post_id).first()
+	if session['loggedIn'] == True:
+		postLikes = int(post.likes) + 1
+		post.likes = str(postLikes)
+		likedPost = PostLikes(user_id=session['user_id'], post_id=post_id)
+		db.session.add(likedPost)
+		db.session.commit()
+	return redirect('/profile')
+
 @app.route('/delete/user/<string:otherUsername>')
 def deleteUser(otherUsername):
         if session['loggedIn'] == True:
                 if session['username'] != otherUsername:
                         otherUser = User.query.filter_by(username=otherUsername).first()
-                        user = User.query.filter_by(username=session['username']).first()
+			user = User.query.filter_by(username=session['username']).first()
                         if otherUser != None:
-                                friend = Friend(username=otherUsername, user_id=user.id)
-                                db.session.delete(friend)
-                                db.session.commit()
-                                flash("User has been removed as friend", "success")
-                                return redirect('/profile')
-                        else:
-                                flash("User does not exist", "danger")
-                                return redirect("/profile")
+               	                #friend = Friend(username=otherUsername, user_id=user.id)
+              	        	#db.session.delete(friend)
+                              	db.session.query(Friend).filter_by(username=otherUsername).filter_by(user_id=user.id).delete()
+				db.session.commit()
+                               	flash("User has been removed as friend", "success")
+                       		return redirect('/profile')
+                       	else:
+                               	flash("User does not exist", "danger")
+                               	return redirect("/profile")
                 else:
                         flash("You cannot delete yourself as a friend", "danger")
                         return redirect('/profile')
@@ -103,13 +127,12 @@ def otherProfile(otherUser):
 	                user = User.query.filter_by(username=otherUser).first()
         	        wallposts = user.wallPosts
          	        wallposts.reverse()
-#			isFriend = user.friends.filter
-#			isFriend = Friend.query.filter_by(username=otherUser and user_id=user.id).first()
-#			if isFriend != None:
-#				isFriend = True
-#			else:
-#				isFriend = False
-                	return render_template('profile.html', user=user, wallPosts=wallposts, ownProfile=False, friendsList=user.friends)
+			isFriend = Friend.query.filter_by(username=otherUser).filter_by(user_id=session['user_id']).first()
+			if isFriend:
+				isFriend = True
+			else:
+				isFriend = False
+                	return render_template('profile.html', user=user, wallPosts=wallposts, ownProfile=False, friendsList=user.friends, isFriend=isFriend)
 		else:
 			return redirect('/profile')
          else:
@@ -130,7 +153,6 @@ def userSearch():
                 flash("Please sign in first", "warning")
 	return redirect("/login")
 
-
 @app.route("/search/<string:search>/results")
 def searchResults(search):
 	if session.get('loggedIn') == True:
@@ -146,7 +168,6 @@ def searchResults(search):
         return redirect("/login")
 
 	
-
 @app.route("/register", methods=['GET','POST'])
 def register():
 	try:
@@ -163,6 +184,7 @@ def register():
 				session['username'] = user.username
 				session['user_id'] = user.id
                                 session['email'] = user.email
+				session['likedPosts'] = None
 			return redirect('/')
 		return render_template('register.html', form=form)
 	except Exception as error:
@@ -181,6 +203,7 @@ def login():
 				session['user_id'] = user.id
                                 session['username'] = user.username
 				session['email'] = user.email
+				session['likedPosts'] = user.postsLiked
 				flash("Nice to see you again", 'success')
 			return redirect(url_for('home'))
 		else:
@@ -198,8 +221,8 @@ def logout():
 
 @app.route("/wallPost/new", methods=['GET','POST'])
 def createPost():
+	form = NewPostForm()
 	if session.get('loggedIn') == True:
-		form = NewPostForm()
 		if form.validate_on_submit():
 			newPost = WallPost(body=form.body.data, user_id=session['user_id'])
 			if request.method == 'POST':
@@ -209,7 +232,7 @@ def createPost():
 		return render_template('newPost.html', form=form)
         else:
                 flash("Please sign in first", 'danger')
-        return render_template('login.html', form=form)
+        return redirect('/login')
 
 @app.route("/profile")
 def profile():	
