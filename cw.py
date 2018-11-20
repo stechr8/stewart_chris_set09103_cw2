@@ -64,16 +64,22 @@ def validateUser(user):
 def home():
 	return render_template('home.html')
 
-@app.route('/post/like/<int:post_id>')
-def likePost(post_id):
+@app.route('/post/like/<string:otherUser>/<int:post_id>')
+def likePost(otherUser, post_id):
 	post = WallPost.query.filter_by(id=post_id).first()
 	if session['loggedIn'] == True:
-		postLikes = int(post.likes) + 1
-		post.likes = str(postLikes)
-		likedPost = PostLikes(user_id=session['user_id'], post_id=post_id)
-		db.session.add(likedPost)
+		hasLiked = PostLikes.query.filter_by(user_id=session['user_id']).filter_by(post_id=post_id).first()
+		if hasLiked:
+			postLikes = int(post.likes) - 1
+			post.likes = str(postLikes)
+			db.session.query(PostLikes).filter_by(user_id=session['user_id']).filter_by(post_id=post_id).delete()
+		else:
+			postLikes = int(post.likes) + 1
+			post.likes = str(postLikes)
+			likedPost = PostLikes(user_id=session['user_id'], post_id=post_id)
+			db.session.add(likedPost)
 		db.session.commit()
-	return redirect('/profile')
+	return redirect('/profile/' + otherUser)
 
 @app.route('/delete/user/<string:otherUsername>')
 def deleteUser(otherUsername):
@@ -130,9 +136,14 @@ def otherProfile(otherUser):
 			isFriend = Friend.query.filter_by(username=otherUser).filter_by(user_id=session['user_id']).first()
 			if isFriend:
 				isFriend = True
+				isTwoWayFriend = Friend.query.filter_by(user_id=session['user_id']).filter_by(username=otherUser).first()
+				if isTwoWayFriend:
+					isTwoWayFriend = True
+				else:
+					isTwoWayFriend = False
 			else:
 				isFriend = False
-                	return render_template('profile.html', user=user, wallPosts=wallposts, ownProfile=False, friendsList=user.friends, isFriend=isFriend)
+                	return render_template('profile.html', user=user, wallPosts=wallposts, ownProfile=False, friendsList=user.friends, isFriend=isFriend, isTwoWayFriend=isTwoWayFriend)
 		else:
 			return redirect('/profile')
          else:
@@ -277,7 +288,8 @@ def updateProfile():
 @app.route("/wallpost/view/<int:wallPost_id>")
 def viewPost(wallPost_id):
 	wallPost = WallPost.query.get_or_404(wallPost_id)
-	return render_template('wallPost.html', wallPost = wallPost)
+	author = wallPost.poster
+	return render_template('wallPost.html', wallPost = wallPost, author=author)
 
 @app.route("/wallpost/delete/<int:wallPost_id>")
 def deletePost(wallPost_id):

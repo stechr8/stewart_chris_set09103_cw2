@@ -3,7 +3,7 @@
 
 <div class="panel panel-default">
 	<div class="panel-body">{{wallPost.body}}</div>
-	<div class="panel-footer">{{wallPost.timeStamp.replace(microsecond=0).isoformat(' ')}}</div>
+	<div class="panel-footer">{{wallPost.timeStamp.replace(microsecond=0).isoformat(' ')}} <span class="pull-right">Author: <a href="/profile/{{author.username}}">{{author.username}}</span></a></div>
 </div>
 
 {% endblock %}
