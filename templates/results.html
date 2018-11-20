@@ -2,7 +2,7 @@
 {%block content%}
 <div class="list-group">
 	{% if matchedUser and matchedUser.username != currentUsername %}
-		<button type="button" class="list-group-item list-group-item-action"><a href="/profile/{{matchedUser.username}}">{{matchedUser.username}}</a></button>
+		<button type="button" class="list-group-item list-group-item-action"><img src="{{url_for('static', filename="profilePics/" + matchedUser.profilePic)}}" class="img-circle" style=width:3% alt="..."><a href="/profile/{{matchedUser.username}}">	{{matchedUser.username}}</a></button>
 	{% else %}
 		No exact match for "{{search}}".
 	{% endif %}
@@ -15,7 +15,7 @@
 			{% for user in similarMatches%}
 				{% if user.username != currentUsername %}
 					{% if user.username != matchedUser.username %}
-						<button type="button" class="list-group-item list-group-item-action"><a href="/profile/{{user.username}}">{{user.username}}</a></button>
+						<button type="button" class="list-group-item list-group-item-action"><img src="{{url_for('static', filename="profilePics/" + user.profilePic)}}" class="img-circle" style=width:3% alt="..."><a href="/profile/{{user.username}}">{{user.username}}</a></button>
 					{% endif %}
 				{% endif %}
 			{% endfor %}

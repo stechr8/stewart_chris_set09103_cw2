@@ -4,7 +4,8 @@ from forms import RegForm, LoginForm, UpdateProfileForm, NewPostForm, SearchForm
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import sha256_crypt
 from werkzeug import secure_filename
-from sqlalchemy import and_
+import random
+import string
 
 app = Flask(__name__)
 app.secret_key = '\xeb\x10\rv\xf3\x00\x81\xa7\x83\xcc\x9e\xd8\x87\x16\x16\xc4!\x94\xb2\xaa%\xebDo'
@@ -133,6 +134,7 @@ def otherProfile(otherUser):
 	                user = User.query.filter_by(username=otherUser).first()
         	        wallposts = user.wallPosts
          	        wallposts.reverse()
+			isTwoWayFriend = None
 			isFriend = Friend.query.filter_by(username=otherUser).filter_by(user_id=session['user_id']).first()
 			if isFriend:
 				isFriend = True
@@ -272,8 +274,12 @@ def updateProfile():
 					user.password = encryptedPassword
 				if form.profilePic.data:
 					filename = secure_filename(form.profilePic.data.filename)
-				        form.profilePic.data.save('static/profilePics/' + filename)
-					user.profilePic = filename
+					ext = filename.split('.')
+					ext = ext[1]
+					newFilename = ''.join([random.choice(string.ascii_letters + string.digits) for n in xrange(17)])
+					newFilename = newFilename + '.' + ext
+				        form.profilePic.data.save('static/profilePics/' + newFilename)
+					user.profilePic = newFilename
 				db.session.commit()
 				flash("Profile updated", "success")
 				return redirect('/profile')
