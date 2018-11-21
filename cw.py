@@ -95,9 +95,7 @@ def deleteUser(otherUsername):
                 if session['username'] != otherUsername:
                         otherUser = User.query.filter_by(username=otherUsername).first()
 			user = User.query.filter_by(username=session['username']).first()
-                        if otherUser != None:
-               	                #friend = Friend(username=otherUsername, user_id=user.id)
-              	        	#db.session.delete(friend)
+                        if otherUser != None:       	        
                               	db.session.query(Friend).filter_by(username=otherUsername).filter_by(user_id=user.id).delete()
 				db.session.commit()
                                	flash("User has been removed as friend", "success")
@@ -123,7 +121,7 @@ def addUser(otherUsername):
 				db.session.add(friend)
 				db.session.commit()
 				flash("User added as friend", "success")
-				return redirect('/profile')
+				return redirect('/profile/' + otherUsername)
 			else:
 				flash("User does not exist", "danger")
 				return redirect("/profile")

@@ -8,10 +8,7 @@
 	{% endif %}
 	{% if similarMatches %}
 		<hr>
-		{% if similarMatchesCount == 1%}
-			No similar results
-		{% else%}
-                Similar results:
+		Similar results:
 			{% for user in similarMatches%}
 				{% if user.username != currentUsername %}
 					{% if user.username != matchedUser.username %}
@@ -20,6 +17,5 @@
 				{% endif %}
 			{% endfor %}
 		{% endif %}
-	{% endif %}
 </div>	
 {%endblock%}
