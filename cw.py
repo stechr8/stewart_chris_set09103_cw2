@@ -40,15 +40,9 @@ class PostLikes(db.Model):
 class Friend(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(20), nullable=False)
+	isOnline = db.Column(db.Boolean, default=False, nullable=False)
 	timeAdded = db.Column(db.DateTime, default=datetime.utcnow(), nullable=False)
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-class Message(db.Model):
-	id = db.Column(db.Integer, primary_key=True)
-	sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-	recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-	body = db.Column(db.String(140))
-	timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
 def validateUser(user):
 	try:
@@ -64,7 +58,22 @@ def validateUser(user):
 @app.route("/")
 def home():
 	wallPosts = WallPost.query.all()
-	return render_template('home.html', wallPosts=wallPosts)
+	if session['loggedIn'] == True:
+		loggedIn = True
+		user = User.query.get(session['user_id'])
+	else:
+		loggedIn = False
+		user = None
+	return render_template('home.html', wallPosts=wallPosts, user=user, loggedIn=loggedIn)
+
+@app.route('/friends')
+def friends():
+	if session['loggedIn'] == True:
+		user = User.query.get(session['user_id'])
+		return render_template('friends.html', friendsList=user.friends)
+	else:
+		flash("Please sign in first", "warning")
+	return redirect('/login')
 
 @app.route('/post/like/<string:otherUser>/<int:post_id>/<string:returnRoute>')
 def likePost(otherUser, post_id, returnRoute):
@@ -203,6 +212,8 @@ def register():
 				session['user_id'] = user.id
                                 session['email'] = user.email
 				session['likedPosts'] = None
+				Friend.query.filter_by(username=session['username']).update({'isOnline' : True})
+                                db.session.commit()
 			return redirect('/')
 		return render_template('register.html', form=form)
 	except Exception as error:
@@ -222,6 +233,8 @@ def login():
                                 session['username'] = user.username
 				session['email'] = user.email
 				session['likedPosts'] = user.postsLiked
+				Friend.query.filter_by(username=session['username']).update({'isOnline' : True})
+				db.session.commit()
 				flash("Nice to see you again", 'success')
 			return redirect(url_for('home'))
 		else:
@@ -232,8 +245,12 @@ def login():
 def logout():
 	session['loggedIn'] = False
 	session.pop('user_id', None)
-	session.pop('username', None)
 	session.pop('email', None)
+	hasFriend = Friend.query.filter_by(username=session['username']).first()
+	if hasFriend:
+		Friend.query.filter_by(username=session['username']).update({'isOnline' : False})
+        	db.session.commit()
+	session.pop('username', None)
 	flash('You have been successfully logged out', 'success')
 	return redirect('/')
 
@@ -300,7 +317,11 @@ def updateProfile():
 def viewPost(wallPost_id):
 	wallPost = WallPost.query.get_or_404(wallPost_id)
 	author = wallPost.poster
-	return render_template('wallPost.html', wallPost = wallPost, author=author)
+	if wallPost.poster.username == session['username']:
+		ownPost = True
+	else:
+		ownPost = False
+	return render_template('wallPost.html', wallPost = wallPost, author=author, ownPost=ownPost)
 
 @app.route("/wallpost/delete/<int:wallPost_id>")
 def deletePost(wallPost_id):

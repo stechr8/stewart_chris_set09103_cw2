@@ -3,7 +3,9 @@
 
 <div class="panel panel-default">
 	<div class="panel-body">{{wallPost.body}}</div>
-	<div class="panel-footer">{{wallPost.timeStamp.replace(microsecond=0).isoformat(' ')}} <span class="pull-right">Author: <a href="/profile/{{author.username}}">{{author.username}}</span></a></div>
+	<div class="panel-footer">{{wallPost.timeStamp.replace(microsecond=0).isoformat(' ')}} <span class="pull-right">Author: <a href="/profile/{{wallPost.poster.username}}">{{wallPost.poster.username}}
+                        </a>Likes: {{wallPost.likes}} {%if not ownPost%}<a  href="/post/like/{{wallPost.poster}}/{{wallPost.id}}/home"><button type="button" id="like{{wallPost.id}}" class="btn btn-default btn-sm" >
+                        </span><span class="glyphicon glyphicon-thumbs-up"></span> Like </button></a></div>{%endif%}
 </div>
 
 {% endblock %}

@@ -1,0 +1,26 @@
+{%extends "base.html"%}
+{%block content%}
+
+<head>
+  <meta http-equiv="refresh" content="30">
+</head>
+
+{% if friendsList %}
+                 {% for friend in friendsList%}
+                        <div class="panel panel-default" style="width:75%">
+                        {% if ownProfile %}
+                                <a href="/delete/user/{{friend.username}}"><button type="button" class="close" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                                </button>
+                                </a>
+                        {% endif %}
+                        <div class="panel-body"><a href="/profile/{{friend.username}}">{{friend.username}}</a>
+			<div class="pull-right">{%if friend.isOnline%}Online&nbsp;&nbsp;&nbsp;&nbsp;{%endif%}<small>Friends since: {{friend.timeAdded.date()}}</small></div>
+			</div>
+                        </div>
+                {% endfor %}
+{%else%}
+You have no friends currently
+{%endif%}
+{%endblock%}
+
