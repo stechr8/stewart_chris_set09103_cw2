@@ -64,6 +64,7 @@ def home():
 	else:
 		loggedIn = False
 		user = None
+	wallPosts.reverse()
 	return render_template('home.html', wallPosts=wallPosts, user=user, loggedIn=loggedIn)
 
 @app.route('/friends')
@@ -232,7 +233,6 @@ def login():
 				session['user_id'] = user.id
                                 session['username'] = user.username
 				session['email'] = user.email
-				session['likedPosts'] = user.postsLiked
 				Friend.query.filter_by(username=session['username']).update({'isOnline' : True})
 				db.session.commit()
 				flash("Nice to see you again", 'success')
@@ -315,13 +315,17 @@ def updateProfile():
 
 @app.route("/wallpost/view/<int:wallPost_id>")
 def viewPost(wallPost_id):
-	wallPost = WallPost.query.get_or_404(wallPost_id)
-	author = wallPost.poster
-	if wallPost.poster.username == session['username']:
-		ownPost = True
+	if session.get('loggedIn') == True:	
+		wallPost = WallPost.query.get_or_404(wallPost_id)
+		author = wallPost.poster
+		if wallPost.poster.username == session['username']:
+			ownPost = True
+		else:
+			ownPost = False
+		return render_template('wallPost.html', wallPost = wallPost, author=author, ownPost=ownPost)
 	else:
-		ownPost = False
-	return render_template('wallPost.html', wallPost = wallPost, author=author, ownPost=ownPost)
+                flash("Please sign in first", "warning")
+                return redirect("/login")
 
 @app.route("/wallpost/delete/<int:wallPost_id>")
 def deletePost(wallPost_id):
@@ -338,6 +342,10 @@ def deletePost(wallPost_id):
 		flash("Please sign in first", "warning")
 		return redirect("/login")
 	return redirect('/profile')
+
+@app.errorhandler(404)
+def pageNotFound(e):
+	return render_template('404.html'), 404
 
 if __name__ == "__main__":
         init(app)

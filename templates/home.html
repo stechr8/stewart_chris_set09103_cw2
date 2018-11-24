@@ -12,8 +12,8 @@
 			<div class="panel-body"><a href="/wallpost/view/{{post.id}}" style="text-decoration:none;"><font color="#000000">{{post.body}}</a></div>
                         <div class="panel-footer">{{post.timeStamp.replace(microsecond=0).isoformat(' ')}} <span class="pull-right">
 			<span class="pull-right">Author: <a href="/profile/{{post.poster.username}}">{{post.poster.username}}</span>
-			</a>Likes: {{post.likes}} <a  href="/post/like/{{post.poster}}/{{post.id}}/home"><button type="button" id="like{{post.id}}" class="btn btn-default btn-sm" >
-                        </span><span class="glyphicon glyphicon-thumbs-up"></span> Like </button></a>
+			</a>Likes: {{post.likes}} <a  href="/post/like/{{post.poster}}/{{post.id}}/home">{%if not user.username == post.poster.username%}<button type="button" id="like{{post.id}}" class="btn btn-default btn-sm" >
+                        </span><span class="glyphicon glyphicon-thumbs-up"></span> Like </button></a>{%endif%}
                  </div>
                 </div>
           {% endfor %}
